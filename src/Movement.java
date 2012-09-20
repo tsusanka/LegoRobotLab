@@ -15,7 +15,7 @@ public class Movement extends Thread
    {
       press = true;
       int buttonID;
-      int costam=1;
+      String costam="EIZI TO CHUJ";
       int menuPosition = 0;
 
       String[] menuStrings = new String[4];
