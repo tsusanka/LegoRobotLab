@@ -14,6 +14,7 @@ public class Movement extends Thread
    private void robotMenu()
    {
 	   //TO MÓJ KURWA COMMIT - SALET
+      int kurwa = 10;
       press = true;
       int buttonID;
       int menuPosition = 0;
