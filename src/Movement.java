@@ -5,7 +5,7 @@ import lejos.nxt.Button;
 public class Movement extends Thread
 {
    private boolean press;
-   
+
    public void run()
    {
       robotMenu();
@@ -13,15 +13,44 @@ public class Movement extends Thread
 
    private void robotMenu()
    {
-      System.out.println("LEFT for SQAURE");
-      System.out.println("ENTER for TRIANGLE");
-      System.out.println("RIGHT for SPIRAL");
-      System.out.println("ESCAPE to LEAVE");
-      
       press = true;
+      int buttonID;
+      int menuPosition = 0;
+
+      String[] menuStrings = new String[4];
+      menuStrings[0] = "Square";
+      menuStrings[1] = "Triangle";
+      menuStrings[2] = "Circle";
+      menuStrings[3] = "Spiral";
+
+      LCD.drawString(">" + menuStrings[0], 1, 0);
+      LCD.drawString(menuStrings[1], 2, 1);
+      LCD.drawString(menuStrings[2], 2, 2);
+      LCD.drawString(menuStrings[3], 2, 3);
+
       while (press)
       {
-         if (Button.ENTER.isDown())
+         buttonID = Button.waitForAnyPress();
+
+         if (Button.ID_RIGHT == buttonID)
+         {
+            LCD.drawString(" ", 1, menuPosition);
+            menuPosition++;
+            if (menuPosition >= menuStrings.length)
+               menuPosition = 0;
+            LCD.drawString(">", 1, menuPosition);
+         }
+
+         if (Button.ID_LEFT == buttonID)
+         {
+            LCD.drawString(" ", 1, menuPosition);
+            menuPosition--;
+            if (menuPosition < 0)
+               menuPosition = menuStrings.length - 1;
+            LCD.drawString(">", 1, menuPosition);
+         }
+
+         if (Button.ID_ENTER == buttonID)
          {
             try
             {
@@ -33,41 +62,27 @@ public class Movement extends Thread
             }
 
             new SoundPlayer().start();
-            triangle();
             press = false;
+            LCD.clear();
+
+            switch (menuPosition)
+            {
+               case 0:
+                  square();
+                  break;
+               case 1:
+                  triangle();
+                  break;
+               case 2:
+                  circle();
+                  break;
+               case 3:
+                  spiral();
+                  break;
+            }
          }
-         
-         if (Button.LEFT.isDown())
-         {
-            try
-            {
-               Thread.sleep(1000);
-            }
-            catch (InterruptedException e)
-            {
-               e.printStackTrace();
-            }
-            new SoundPlayer().start();
-            square();
-            press = false;
-         }
-         
-         if (Button.RIGHT.isDown())
-         {
-            try
-            {
-               Thread.sleep(1000);
-            }
-            catch (InterruptedException e)
-            {
-               e.printStackTrace();
-            }
-            new SoundPlayer().start();
-            spiral();
-            press = false;
-         }
-         
-         if (Button.ESCAPE.isDown())
+
+         if (Button.ID_ESCAPE == buttonID)
          {
             press = false;
             System.exit(0);
@@ -79,7 +94,6 @@ public class Movement extends Thread
    {
       MotorPort.B.controlMotor(0, 3);
       MotorPort.C.controlMotor(0, 3);
-
    }
 
    private void resetTachos()
@@ -96,7 +110,6 @@ public class Movement extends Thread
 
    private void square()
    {
-      System.out.println("    SQUARE");
       int degree;
       for (int i = 0; i < 4; i++)
       {
@@ -106,8 +119,8 @@ public class Movement extends Thread
          while (degree < 720 && Button.RIGHT.isUp())
          {
             MotorPort.B.controlMotor(71, 1);
-            MotorPort.C.controlMotor(70, 1);           
-            
+            MotorPort.C.controlMotor(70, 1);
+
             degree = MotorPort.B.getTachoCount();
          }
 
@@ -127,7 +140,6 @@ public class Movement extends Thread
 
    private void triangle()
    {
-      System.out.println("    TRIANGLE");
       int degree;
       for (int i = 0; i < 3; i++)
       {
@@ -136,9 +148,9 @@ public class Movement extends Thread
 
          while (degree < 720 && Button.RIGHT.isUp())
          {
-            MotorPort.B.controlMotor(71, 1);  
+            MotorPort.B.controlMotor(71, 1);
             MotorPort.C.controlMotor(70, 1);
-                      
+
             degree = MotorPort.B.getTachoCount();
          }
 
@@ -152,13 +164,13 @@ public class Movement extends Thread
             degree = MotorPort.B.getTachoCount();
          }
       }
+      
       stopMotors();
       robotMenu();
    }
 
    private void spiral()
    {
-      System.out.println("    SPIRAL");
       int degree = 0;
       int i = 50;
 
@@ -179,6 +191,10 @@ public class Movement extends Thread
 
       stopMotors();
       robotMenu();
-      // thju e threbe
+   }
+
+   private void circle()
+   {
+
    }
 }
