@@ -10,6 +10,7 @@ public class Movement extends Thread {
 		robotMenu();
 	}
 
+
 	private void stopMotors() {
 		MotorPort.B.controlMotor(0, 3);
 		MotorPort.C.controlMotor(0, 3);
