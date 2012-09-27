@@ -182,7 +182,7 @@ public class Movement extends Thread {
 	}
 
 	private void circle() {
-		robotMenu();
+		//TODO: Add moving in circle!
 	}
 
 	private void customMoveMenu() {
@@ -315,6 +315,16 @@ public class Movement extends Thread {
 
 		}
 
+		LCD.clear();
+		
+		for (int i = 0; i < moveVector.size(); i++) {
+			LCD.drawString(moveVector.elementAt(i).toString(), 1, i);
+			LCD.drawString(turnVector.elementAt(i).toString(), 7, i);
+
+		}
+		
+		Button.waitForAnyPress();
+		
 		stopReset();
 		LCD.clear();
 		robotMenu();
