@@ -2,7 +2,6 @@ public class MainClass
 {
    public static void main(String[] args) throws InterruptedException
    {      
-      new DistanceSensor().start();
-      
+      new Movement(4).start();      
    }
 }

@@ -1,8 +1,11 @@
+import java.util.Random;
 import java.util.Vector;
 
 import lejos.nxt.LCD;
 import lejos.nxt.MotorPort;
 import lejos.nxt.Button;
+import lejos.nxt.SensorPort;
+import lejos.nxt.UltrasonicSensor;
 
 public class Movement extends Thread {
 
@@ -11,38 +14,56 @@ public class Movement extends Thread {
 	private double radiusMultiplier = 1;
 	private double turnMultiplier = 1;
 
-	// creating movement class with given robot wheels radius
+	/**
+	 * Class constructor.
+	 * 
+	 * @param wheelsRadius
+	 *            Radius of installed wheels in centimeters. Possible choices
+	 *            are: 4. TODO Wheel sizes. Add another possible sizes of the wheels.
+	 */
 	public Movement(int wheelsRadius) {
-		if (wheelsRadius == 4)
-		{
+		if (wheelsRadius == 4) {
 			this.radiusMultiplier = 11;
 			this.turnMultiplier = 0.09;
-		}			
+		}
 	}
 
-	// Slightly changes moving setting if robot's turning right while going
-	// straight
-	public void increaseBaseSpeedLeft() {
-		this.baseSpeedLeft++;
-	}
-
-	// Slightly changes moving setting if robot's turning left while going
-	// straight
-	public void increaseBaseSpeedRight() {
-		this.baseSpeedRight++;
-	}
-
+	/**
+	 * Method ran after creating this class using threading.
+	 */
 	public void run() {
 		robotMenu();
 	}
 
-	// Moves robot for the distance given in centimeters
-	public void driveDistance(int centimetersDistance) {
+	/**
+	 * Use this when robot is turning slightly right while he was supposed to go
+	 * straight.
+	 */
+	public void increaseBaseSpeedLeft() {
+		this.baseSpeedLeft++;
+	}
+
+	/**
+	 * Use this when robot is turning slightly left while he was supposed to go
+	 * straight.
+	 */
+	public void increaseBaseSpeedRight() {
+		this.baseSpeedRight++;
+	}
+
+	/**
+	 * Moves robot straight for the given distance.
+	 * 
+	 * @param centimetersDistance
+	 *            Distance to cover given in centimeters
+	 */
+	public void driveStraight(int centimetersDistance) {
 		centimetersDistance *= radiusMultiplier;
 
 		MotorPort.B.controlMotor(baseSpeedRight, centimetersDistance > 0 ? 1
 				: 2);
-		MotorPort.C.controlMotor(baseSpeedLeft, centimetersDistance > 0 ? 1 : 2);
+		MotorPort.C
+				.controlMotor(baseSpeedLeft, centimetersDistance > 0 ? 1 : 2);
 
 		while (true) {
 			if (Math.abs(MotorPort.B.getTachoCount()) > Math
@@ -53,16 +74,32 @@ public class Movement extends Thread {
 		stopReset();
 	}
 
-	// Starts motors, they will run until manually stopped or program ends (powerModificator is between -30 and
-	// 30)
-	public void startMotors(int powerModificator, int backwards) {		
+	/**
+	 * Starts both motors for an unspecified time. They need to be then stopped
+	 * by stopMotors or stopReset methods.
+	 * 
+	 * @param powerModificator
+	 *            Modifies the standard power of motors. Value under -30 wont
+	 *            start the motors at all, while value over 30 gives them
+	 *            maximum power.
+	 * @param backwards
+	 *            Value 1 if you want to run motors backwards. Has to be 0
+	 *            otherwise.
+	 */
+	public void startMotors(int powerModificator, int backwards) {
 		MotorPort.B.controlMotor(powerModificator + baseSpeedRight,
 				backwards + 1);
 		MotorPort.C.controlMotor(powerModificator + baseSpeedLeft,
 				backwards + 1);
 	}
 
-	// Two-wheel turn for a given angle (negative value turns left)
+	/**
+	 * Turns robot for a given angle using both motors.
+	 * 
+	 * @param angle
+	 *            Angle to turn the robot. Negative value turns left and
+	 *            positive turns right.
+	 */
 	public void turn(int angle) {
 		stopReset();
 
@@ -78,36 +115,46 @@ public class Movement extends Thread {
 		stopReset();
 	}
 
-	// Stops all motors, leaving tachometers untouched
+	/**
+	 * Stops the wheel motors. Does not reset their tachometers.
+	 */
 	public void stopMotors() {
 		MotorPort.B.controlMotor(0, 3);
 		MotorPort.C.controlMotor(0, 3);
 	}
 
-	// Resets the tachometers
+	/**
+	 * Resets the tachometers of wheel motors.
+	 */
 	private void resetTachos() {
 		MotorPort.B.resetTachoCount();
 		MotorPort.C.resetTachoCount();
 	}
 
-	// Stops all the motors and resets the tachometers
+	/**
+	 * Stops the wheel motors and resets their tachometers.
+	 */
 	public void stopReset() {
 		stopMotors();
 		resetTachos();
 	}
 
+	/**
+	 * Shows the standard version of robot menu.
+	 */
 	private void robotMenu() {
 
 		// initializations
 		boolean press = true;
 		int buttonID;
 		int menuPosition = 0;
-		String[] menuStrings = new String[5];
+		String[] menuStrings = new String[6];
 		menuStrings[0] = "Square";
 		menuStrings[1] = "Triangle";
 		menuStrings[2] = "Circle";
 		menuStrings[3] = "Spiral";
 		menuStrings[4] = "Custom";
+		menuStrings[5] = "Random";
 
 		// drawing menu
 		LCD.drawString(">", 1, 0);
@@ -136,10 +183,9 @@ public class Movement extends Thread {
 
 			if (Button.ID_ENTER == buttonID) {
 
-				// if a standard move scheme is choosen, wait a second to put
-				// him
-				// down and play music
-				if (menuPosition < 4) {
+				// if a standard move scheme is chosen, wait a second to put
+				// him down and play music
+				if (menuPosition != 4) {
 					try {
 						Thread.sleep(1000);
 					} catch (InterruptedException e) {
@@ -148,26 +194,29 @@ public class Movement extends Thread {
 					new SoundPlayer().start();
 				}
 
-				// clear lcd
+				// clear the lcd
 				press = false;
 				LCD.clear();
 
 				// pick proper movement type
 				switch (menuPosition) {
 				case 0:
-					square();
+					this.square(100);
 					break;
 				case 1:
-					triangle();
+					this.triangle(100);
 					break;
 				case 2:
-					circle();
+					this.circle();
 					break;
 				case 3:
-					spiral();
+					this.spiral();
 					break;
 				case 4:
-					customMoveMenu();
+					this.customMoveMenu();
+					break;
+				case 5:
+					this.randomMovement();
 					break;
 				}
 			}
@@ -179,64 +228,42 @@ public class Movement extends Thread {
 		}
 	}
 
-	private void square() {
-		int degree;
+	/**
+	 * Moves the robot in a square path
+	 * 
+	 * @param sideLength
+	 *            Side length in centimeters
+	 */
+	private void square(int sideLength) {
 		for (int i = 0; i < 4; i++) {
-			degree = 0;
-			stopReset();
-
-			while (degree < 720 && Button.RIGHT.isUp()) {
-				MotorPort.B.controlMotor(71, 1);
-				MotorPort.C.controlMotor(70, 1);
-
-				degree = MotorPort.B.getTachoCount();
-			}
-
-			degree = 0;
-			MotorPort.B.resetTachoCount();
-			MotorPort.C.controlMotor(0, 3);
-
-			while (degree < 210 && Button.RIGHT.isUp()) {
-				MotorPort.B.controlMotor(70, 1);
-				degree = MotorPort.B.getTachoCount();
-			}
+			this.driveStraight(sideLength);
+			this.turn(-90);
 		}
-		stopMotors();
-		robotMenu();
+		this.run();
 	}
 
-	private void triangle() {
-		int degree;
+	/**
+	 * Moves the robot in a triangle path
+	 * 
+	 * @param sideLength
+	 *            Side length in centimeters
+	 */
+	private void triangle(int sideLength) {
 		for (int i = 0; i < 3; i++) {
-			degree = 0;
-			stopReset();
-
-			while (degree < 720 && Button.RIGHT.isUp()) {
-				MotorPort.B.controlMotor(71, 1);
-				MotorPort.C.controlMotor(70, 1);
-
-				degree = MotorPort.B.getTachoCount();
-			}
-
-			degree = 0;
-			MotorPort.B.resetTachoCount();
-			MotorPort.C.controlMotor(0, 3);
-
-			while (degree < 280 && Button.RIGHT.isUp()) {
-				MotorPort.B.controlMotor(70, 1);
-				degree = MotorPort.B.getTachoCount();
-			}
+			this.driveStraight(sideLength);
+			this.turn(-120);
 		}
-
-		stopMotors();
-		robotMenu();
+		this.run();
 	}
 
+	/**
+	 * Moves the robot in a spiral path. TODO Spiral size. Add arguments to this
+	 * method so you can pick the length/end radius of the spiral and if it
+	 * should move from the inside to the outside or vice versa
+	 */
 	private void spiral() {
 		int degree = 0;
 		int i = 50;
-
-		stopReset();
 
 		while (degree < 8000) {
 			MotorPort.B.controlMotor(70, 1);
@@ -249,10 +276,16 @@ public class Movement extends Thread {
 			degree = MotorPort.B.getTachoCount();
 		}
 
-		stopMotors();
-		robotMenu();
+		stopReset();
+		this.run();
 	}
 
+	/**
+	 * Moves the robot in a circle path.
+	 * 
+	 * TODO Circle radius. Add argument to this method so you can pick a radius
+	 * of the circle.
+	 */
 	private void circle() {
 		int degree = 0;
 
@@ -265,9 +298,12 @@ public class Movement extends Thread {
 		}
 
 		stopMotors();
-		robotMenu();
+		this.run();
 	}
 
+	/**
+	 * Shows the menu of custom movement programming.
+	 */
 	private void customMoveMenu() {
 		boolean addMoves = true, press = true;
 		int goUnits = 5, turnAngle = 0, buttonID;
@@ -360,9 +396,20 @@ public class Movement extends Thread {
 		}
 		customMove(moveVector, turnVector);
 		LCD.clear();
-		robotMenu();
+		this.run();
 	}
 
+	/**
+	 * Moves the robot in a custom, given path. The pattern is going straight
+	 * for a given distance, then turning for a given angle and then again from
+	 * the beginning. This path can be endless. Argument vectors should have the
+	 * same size.
+	 * 
+	 * @param moveVector
+	 *            Vector of integers. Holds the distances to go straight for.
+	 * @param turnVector
+	 *            Vector of integers. Holds the angles to turn around.
+	 */
 	private void customMove(Vector<Integer> moveVector,
 			Vector<Integer> turnVector) {
 
@@ -403,13 +450,38 @@ public class Movement extends Thread {
 		for (int i = 0; i < moveVector.size(); i++) {
 			LCD.drawString(moveVector.elementAt(i).toString(), 1, i);
 			LCD.drawString(turnVector.elementAt(i).toString(), 7, i);
-
 		}
 
 		Button.waitForAnyPress();
 
 		stopReset();
 		LCD.clear();
-		robotMenu();
+		this.run();
+	}
+
+	/**
+	 * Moves the robot in a random path. It uses the distance sensor not to
+	 * crash into a wall. The pattern is moving straight until almost hitting a
+	 * wall, then turning random angle and then going straight again. Just like
+	 * automatic/robot vacuum cleaners.
+	 */
+	public void randomMovement() {
+		UltrasonicSensor distanceSensor = new UltrasonicSensor(SensorPort.S4);
+		Random generator = new Random();
+		int rand;
+
+		while (Button.ESCAPE.isUp()) {
+			this.startMotors(0, 0);
+
+			while (true) {
+				if (distanceSensor.getDistance() < 35) {
+					rand = generator.nextInt() % 500 + 45;
+					this.turn(rand);
+					break;
+				}
+			}
+		}
+		
+		this.run();
 	}
 }
