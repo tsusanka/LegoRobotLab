@@ -17,7 +17,6 @@ public class Movement extends Thread
    private int baseSpeedRight = 70;
    private double wheelsRadius;
    private double wheelsSpacing;
-   private float powerFactor = 1;
 
    /**
     * Class constructor.
@@ -578,7 +577,7 @@ public class Movement extends Thread
 
    private void AppropriatePower()
    {
-      powerFactor = (MAX_VOLTAGE - Battery.getVoltage()) / MAX_VOLTAGE;
+      float powerFactor = (MAX_VOLTAGE - Battery.getVoltage()) / MAX_VOLTAGE;
       baseSpeedLeft += (int)(baseSpeedLeft * powerFactor);
       baseSpeedRight += (int)(baseSpeedRight * powerFactor);
    }
