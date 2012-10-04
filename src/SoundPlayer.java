@@ -24,7 +24,6 @@ public class SoundPlayer extends Thread
    {
       while (true)
       {
-         //int r = (int) Math.ceil(3 * Math.random());
          for (int i = 0; i < note1.length; i += 2)
          {
             final int tone = (int) note1[i];
