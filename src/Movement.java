@@ -6,15 +6,17 @@ import lejos.nxt.LCD;
 import lejos.nxt.MotorPort;
 import lejos.nxt.Button;
 import lejos.nxt.SensorPort;
+import lejos.nxt.SoundSensor;
 import lejos.nxt.UltrasonicSensor;
 
 public class Movement extends Thread
 {
    public static final boolean DEBUG_MODE = true;
    public static final float MAX_VOLTAGE = 9;
+   public static final int SPEED = 70;
 
-   private int baseSpeedLeft = 70;
-   private int baseSpeedRight = 70;
+   private int baseSpeedLeft = SPEED;
+   private int baseSpeedRight = SPEED;
    private double wheelsRadius;
    private double wheelsSpacing;
 
@@ -150,7 +152,7 @@ public class Movement extends Thread
    {
 
       // initializations
-      AppropriatePower();
+      appropriatePower();
       boolean press = true;
       int buttonID;
       int menuPosition = 0;
@@ -536,23 +538,43 @@ public class Movement extends Thread
       UltrasonicSensor distanceSensor = new UltrasonicSensor(SensorPort.S4);
       Random generator = new Random();
       int rand;
-
-      while (Button.ESCAPE.isUp())
+      
+      SoundSensor soundSensor = new SoundSensor(SensorPort.S3);
+      boolean canIgoOut = false;
+      
+      while (!canIgoOut)
       {
          this.startMotors(0, 0);
 
          while (true)
          {
+            
+            if(soundSensor.readValue() > 88)
+            {
+               canIgoOut = true;
+               break;
+            }
             if (distanceSensor.getDistance() < 35)
             {
-               rand = generator.nextInt() % 500 + 45;
+               rand = generator.nextInt() % 255 + 45;
                this.turn(rand);
                break;
             }
          }
       }
-
+      
+      this.stopMotors();
       this.run();
+   }
+   
+   /**
+    * Changing motors power depending on current voltage
+    */
+   private void appropriatePower()
+   {
+      float powerFactor = (MAX_VOLTAGE - Battery.getVoltage()) / MAX_VOLTAGE;
+      baseSpeedLeft =  SPEED + (int)(baseSpeedLeft * powerFactor);
+      baseSpeedRight = SPEED + (int)(baseSpeedRight * powerFactor);
    }
 
    /**
@@ -560,26 +582,18 @@ public class Movement extends Thread
     */
    private void testMethod()
    {
-      try
+      SoundSensor soundSensor = new SoundSensor(SensorPort.S3);
+      int tmp;
+      
+      while (true)
       {
-         Thread.sleep(1000);
-         this.turn(90);
-         Thread.sleep(200);
-         this.turn(-360);
+         tmp = soundSensor.readValue();
+         if(tmp > 85)
+         {
+            LCD.drawInt(tmp, 0, 1);
+         }
+         
       }
-      catch (InterruptedException e)
-      {
-         e.printStackTrace();
-      }
-
-      this.run();
-   }
-
-   private void AppropriatePower()
-   {
-      float powerFactor = (MAX_VOLTAGE - Battery.getVoltage()) / MAX_VOLTAGE;
-      baseSpeedLeft += (int)(baseSpeedLeft * powerFactor);
-      baseSpeedRight += (int)(baseSpeedRight * powerFactor);
    }
 
    /**
@@ -589,11 +603,13 @@ public class Movement extends Thread
    {
       String tmp = Float.toString(Battery.getVoltage());
       LCD.drawString(tmp, 0, 0);
+      LCD.drawInt(baseSpeedLeft, 0, 1);
+      LCD.drawInt(baseSpeedRight, 0, 2);
 
       while (Button.ESCAPE.isUp())
       {
       }
-      this.run();
+      this.robotMenu();
    }
 
    /**
